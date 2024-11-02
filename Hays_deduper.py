@@ -10,11 +10,10 @@ import re
 #set up argpase
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Remove PCR duplicates from a SAM file of interest")
-    parser.add_argument("-f", "--file", help="Designates absolute file path to sorted sam file", type=str, required=True)
-    parser.add_argument("-o", "--outfile", help="designates absolute file path to deduplicated sam file", type=str, required = True)
-    parser.add_argument("-u", "--umi", help="designates file containing the list of UMIs", type=str, default='STL96.txt')
+    parser.add_argument("-f", "--file", help="Designates file path to sorted input sam file", type=str, required=True)
+    parser.add_argument("-o", "--outfile", help="designates file path to output the deduplicated sam file", type=str, required = True)
+    parser.add_argument("-u", "--umi", help="designates file path containing the list of UMIs", type=str, default='STL96.txt')
     return parser.parse_args()
-    #add help
 
 #call get_args to create args object
 args = get_args()
@@ -22,7 +21,7 @@ args = get_args()
 #set global variables and assign them to the user inputted values at the function call
 sam_file: str = args.file
 output: str = args.outfile
-umis: str = args.umi
+umi_file_path: str = args.umi
 
 
 #hard coded variables for testing
@@ -118,7 +117,7 @@ with open(sam_file, "rt") as fh:
                 info = line.split('\t') #split each column into list entry
                 
                 #first check to see if a new chromosome is encountered
-                chromo = int(info[2])
+                chromo = info[2]
                 if chromo != curr_chromo: #if is, clear sets and reset curr chromo
                     plus_info = set()
                     minus_info = set()
@@ -142,7 +141,6 @@ with open(sam_file, "rt") as fh:
                 if ((FLAG & 16) == 16):  #minus strand
                     #calculate 5' start position
                     position = calc_pos(CIGAR, POS, "minus")
-                    print(position)
 
                     #create tuple of duplication information
                     dup_info = (umi, position)
@@ -158,7 +156,6 @@ with open(sam_file, "rt") as fh:
                         out.write(output)
                         outputted_line_count += 1
 
-                        print(minus_info)
                 else: #plus strand
                     #calculate 5' start position
                     position = calc_pos(CIGAR, POS, "plus")

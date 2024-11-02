@@ -284,11 +284,133 @@ This returned nothing, so the files match.
 Now, I need to set up the argparse. I will also write an sbatch script called ```run_dedup.sh``` to add all the arguments and run the file.
 
 
+For the google form, I need to run ```/projects/bgmp/shared/deduper/C1_SE_uniqAlign.sam```. This file does not appear to be sorted, so I added the following sort command to my sbatch script:
+```
+samtools sort -O sam /projects/bgmp/shared/deduper/C1_SE_uniqAlign.sam -o C1_SE_uniqAlign_sorted.sam
+```
 
+I will run this file through my script and I need to report the number of header lines, number of unique reads, number of wrong UMIs, and number of removed duplicates. I also need to report the number of reads per chromosome in the form <chrom_name><tab><count>. Finally, I need to report infomation about how much memory my script used to deduplicate and how long it ran for.
 
+I ran the file:
+```
+sbatch run_dedup.sh 
+Submitted batch job 23107673
+```
 
+It errored on the first run because I made the chromosome information an integer but mitochondrial MT "chromosome" can't be an int so I will remove that int casting because it is not necessary.
 
-* how to calculate memory usage?
-max rss 
-usr bin time output of other command in talapas lecture to look it up with job id
+Running again:
+```
+sbatch run_dedup.sh 
+Submitted batch job 23107681
 
+Number of alignments kept: 13719048
+Number of duplicates removed: 4467362
+Number of unknown umis discarded: 0
+```
+
+It successfully ran and the output file is called ```dedup_out.sam```
+
+Here are all the bash commands I used to obtain / where I found that information:
+```
+# Header lines
+$ cat dedup_out.sam | grep "^@" | wc -l
+65
+
+# Unique reads - output information
+Number of alignments kept: 13719048
+
+# Wrong UMIs - output information
+Number of unknown umis discarded: 0
+
+#Duplicates removed - output information
+Number of duplicates removed: 4467362
+
+# Number of reads per chromosome
+$ cat dedup_out.sam | grep -v "^@" | cut -f 3 | uniq -c
+ 697508 1
+ 564903 10
+1220389 11
+ 359951 12
+ 467659 13
+ 387239 14
+ 437465 15
+ 360923 16
+ 517566 17
+ 290506 18
+ 571665 19
+2787018 2
+ 547615 3
+ 589839 4
+ 562160 5
+ 510818 6
+1113183 7
+ 576463 8
+ 627488 9
+ 202002 MT
+ 317853 X
+   2247 Y
+      3 JH584299.1
+    656 GL456233.2
+      6 GL456211.1
+      4 GL456221.1
+      1 GL456354.1
+      5 GL456210.1
+      4 GL456212.1
+    294 JH584304.1
+      2 GL456379.1
+      3 GL456367.1
+      1 GL456239.1
+      1 GL456383.1
+   5450 MU069435.1
+      1 GL456389.1
+     21 GL456370.1
+      1 GL456390.1
+      1 GL456382.1
+     17 GL456396.1
+      3 GL456368.1
+      3 MU069434.1
+    111 JH584295.1
+
+#Memory (in GB) - /usr/bin/time info
+Maximum resident set size (kbytes): 557364
+557364 kbytes = 0.56GB
+
+#Run time (H:mm:ss) - /usr/bin/time info
+Elapsed (wall clock) time (h:mm:ss or m:ss): 1:03.11
+```
+
+Final report:
+```
+Header lines: 65
+Unique reads: 13719048
+Wrong UMIs: 0
+Duplicates removed: 4467362
+Number of reads per chromosome:
+
+ 697508 1
+ 564903 10
+1220389 11
+ 359951 12
+ 467659 13
+ 387239 14
+ 437465 15
+ 360923 16
+ 517566 17
+ 290506 18
+ 571665 19
+2787018 2
+ 547615 3
+ 589839 4
+ 562160 5
+ 510818 6
+1113183 7
+ 576463 8
+ 627488 9
+ 202002 MT
+ 317853 X
+   2247 Y
+
+Memory (in GB): 0.56 GB
+Run time (H:mm:ss): 0:01:03
+```

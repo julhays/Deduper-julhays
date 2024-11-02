@@ -1,2 +1,5 @@
 dedup_out.sam
 test.py
+*.out
+*.err
+C1_SE_uniqAlign_sorted.sam
