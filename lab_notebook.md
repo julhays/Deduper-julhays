@@ -107,3 +107,188 @@ In order to sort the file by UMI then chromosome with bash we will use the follo
 ```
 cat pseudocode/input.sam | grep -v "@" | sort -t ':'  -k 8 | sort -k 3 -s
 ```
+
+---
+
+### 10/18/24
+### Part 2 - Pseudocode peer review
+
+Hi Varsheni,
+
+I like how you outlined all the cases you might encounter in your unit test folder. That is very helpful to see all the possibilities your code will account for. Your flow chart is really pretty as well.
+
+Your algorithm makes a lot of sense to me and I can follow the logic clearly. Sorting by UMI and chromosome is a great idea! I like your idea of using a set to store the unique read information. It is also good that you clear it each time you encounter a new chromosome and UMI, which will save you memory. How do you plan to check if the S is on the start or the end of the CIGAR string?
+
+I believe your algorithm does everything it's supposed to do outlined in part 1. Good job!
+
+Your functions all seem reasonable as well. I like how you included multiple examples of inputs and outputs to thoroughly show what your function is going to do. Including a function to extract chromosome info, as well as the UMI and strand is useful so I may implement that in my code.
+
+Overall, I think you have a great strategy. Good luck coding this up!
+
+-Jules
+
+
+Hi Zach,
+
+I like how you outlined all the duplicate scenarios you might encounter in input_sam_info.md Links to an external site.. That is very helpful to see all the possibilities your code will account for.
+
+Your problem statement could have a bit more detail, such as why we want to remove duplicates or how we tell what is a duplicate. I lost points on a previous assignment for not having a detailed about problem statement so I don't want the same to happen to you!
+
+Your algorithm makes a lot of sense to me and I can follow the logic clearly. I like your idea of using a set to store the unique read information. It is also good that you clear it each time you encounter a new chromosome, which will save you memory. One suggestion is you could incorporate the the cigar_pos into step 8 so that you can adjust the position if needed before adding it to the tuple rather than having to go back into the tuple and readjust it (tuples are immutable so it would cause you to have to create a whole new tuple if you did this, which would take time). On that same note, maybe store all the pieces of information from steps 6, 7, 8, and 9 as a local variable and then add them all to a tuple at the same time to avoid having to remake the tuple each time you add one thing.
+
+I believe your algorithm does everything it's supposed to do outlined in part 1. Good job!
+
+Your functions all seem reasonable as well. I like how you included multiple examples of input and output to give a more thorough overview of what your function will do. Maybe you could also include a function to extract the UMI information from the first column?
+
+Overall, I think you have a great strategy. Good luck coding this up!
+
+-Jules
+
+
+
+Hi Mahmoud,
+
+Your problem statement is very detailed so I can clearly understand what you are trying to do. One suggestion here is when you say "PCR duplicates should map to the same 5' start of read" that is not always true because the POS field gives the position of the leftmost end of the read (which is the 5' for the + strand and the 3' end for the - strand).
+
+Your algorithm makes a lot of sense to me and I can follow the logic clearly. I like your idea of using a set to store the unique read information. It is also good that you clear it each time you encounter a new chromosome, which will save you memory. The only piece that is confusing to me is the "adjust the start position based on the strand direction". I could be wrong, but I believe the adjusted start position is just the POS number - the number of clipped nts (the number in front of the S in the CIGAR string). Does the strandedness change how you deal with this? One other suggestion is since you are going to have a new set for each chromosome, you probably don't need to store the chromosome information in each individual tuple. You could just have it as a global variable instead.
+
+I believe your algorithm does everything it's supposed to do outlined in part 1. Good job!
+
+Your functions all seem reasonable as well. The find_UMI one is a good idea because I did not consider how I will extract the UMI from the NAME field. Will the find_pos function make the adjustment to the POS based on soft clipping?
+
+Overall, I think you have a great strategy. Good luck coding this up!
+
+-Jules
+
+
+---
+### 10/24/24
+### The feedback I recieved
+
+Amelia: Overall, great logic that will capture every case. I like that you clear memory at both a new UMI and a new chromosome - this is code that won't use a ton of memory!
+
+Fantastic overview of the project goal. You obviously have a great grasp of the context of this project and why this script should be used. I also like the different test cases you outlined. You kept it simple to follow what we're looking for - great job.
+
+I'm not sure why you would want to store the header in a separate file - I think you would want to just write all the header lines directly to your single de-duplicated output file without that middle step.
+
+I'm not sure you can sort by UMI since the UMI is all the way at the end of the QNAME column. You might only be able to sort by chromosome and go from there. I do really like the idea of working solely on one UMI and then one chromosome - but it might not be feasible with the sort command. If I'm wrong or you've tested it, then this is a great approach!!
+
+I like outputting invalid UMIs to a separate file, very helpful for the end user. Hamming Distance comment is a compelling error-correction method! That would be cool to implement.
+
+There's some weirdness with correcting a "-" strand that has soft-clipping that I don't see outlined here. That is a complicated concept so if you have further questions about that, let me know!
+
+
+Claire: Hi Jules,
+
+I really appreciate how thorough your pseudocode is and it is very easy to read. I can easily follow the logic! I especially appreciate how in depth your problem statement was and how you thoroughly accounted for all the different scenarios. I was wondering if you had considered what to do if the S on the CIGAR string is not at the beginning and is actually at the end. You could maybe account for this by maybe taking in CIGAR string as a string and upon hitting an S, stopping and int() -ing everything prior to the S. If it is soft clipped on the left, then maybe you could use an if-else statement to process it and if the int() fails then you could just move on. Just a suggestion! I like your function for calculating the position based on soft clipping. Could you also include a function for strandedness? This could be helpful.
+
+In general, you did a really good job and your code is very thorough and very easy to follow.
+
+Good luck on writing your code!
+
+Claire
+
+
+The logic here is great, clear and easy to follow, I really like the idea of sorting the initial SAM file by UMI and then chromosome I think that's a smart way of parsing through the file and making the python simpler I wouldn't change anything about your information flow or the way that you're storing and writing out the info.
+
+The one note i have it makes sure to do the extra soft clipping steps for the - strand, to add the M match number, right side soft clipping, and deletions (and then -1 to adjust for 1 based counting) instead of just sticking to the same + strand left side S check. I think that will be a super easy adjustment though.
+
+Also! I'm pretty sure that if the UMI is not in the set of known UMIs we are just disregarding the entire read - this could be different for a challenge question though.
+
+I think that the one function you have here is totally reasonable, everything else makes a lot of sense to be wrapped in the actual loop so that looks great - also love the input output example I will be stealing that formatting!
+
+
+### Part 3 - Lets start coding
+
+I made a top level file called ```Hays_deduper.py```.
+
+I started writing some of the code body and functions.
+
+---
+### 10/28/24
+### Part 3 cont
+
+Still coding up ```Hays_deduper.py```.
+
+Questions:
+* should unknown UMIs be discarded?
+get rid of them but count them
+* how to calculate memory usage?
+max rss 
+usr bin time output of other command in talapas lecture to look it up with job id
+
+
+
+I made a script, test.py, to test some regex stuff with my cigar string.
+```
+chmod 755 test.py
+```
+
+---
+### 11/2/24
+### Part 3 cont
+
+I'm ready to start testing and debugging my script.
+
+```
+chmod 755 Hays_deduper.py
+```
+
+I fixed lots of errors, then had to adjust some functions so they worked right.
+
+This still isn't working properly, but I suspect my input file is messed up. Knowing what I know now, I am going to redo ```input.sam```.
+
+
+Description of unit test:
+
+'''input.sam''' contains input lines that contain the following information:
+
+Header scheme: {KEEP or TOSS}:{VALID or INVALID umi}:STRAND:UMI
+
+| Alignment Number | Duplicate? | Keep or Toss | Reason |
+|---|---|---|---|
+| 1 | No | Keep | unique |
+| 2 | Yes | Toss | identical to 1 |
+| 3 | Yes | Toss | identical to 1 after adjusting for soft-clipping |
+| 4 | No | Keep | different position to 1 |
+| 5 | No | Keep | different position to 1 after adjusting for soft-clipping|
+| 6 | No | Keep | different umi to 1 |
+| 7 | No | Keep | different strand to 1 |
+| 8 | Yes | Toss | identical to 1, but further down to make sure order doesn't matter |
+| 9 | No | Keep | different chromosome than 1 |
+| 10 | No | Keep | unique |
+| 11 | No | Toss | invalid UMI |
+| 12 | Yes | Toss | same as 11 |
+| 13 | No | Keep | same as 11 but on other strand |
+| 14 | Yes | Toss | same as 13 after minus position adjustment |
+| 15 | Yes | Toss | same as 13 after minus position adjustment |
+| 16 | Yes | Toss | same as 13 after minus position adjustment |
+| 17 | Yes | Toss | same as 9, further down to test ordering |
+| 18 | No | Toss | invalid UMI |
+
+
+When run though ```Hays_deduper.py``` it I should get '''output.sam''' as the resulting file and the following text output:
+```
+Number of alignments kept: 8
+Number of duplicates removed: 8
+Number of unknown umis discarded: 2
+```
+
+Ok, I am getting these numbers now. Let me check that my outputs are the same:
+
+```
+diff dedup_out.sam part1-pseudocode/output.sam
+```
+This returned nothing, so the files match.
+
+Now, I need to set up the argparse. I will also write an sbatch script called ```run_dedup.sh``` to add all the arguments and run the file.
+
+
+
+
+
+
+* how to calculate memory usage?
+max rss 
+usr bin time output of other command in talapas lecture to look it up with job id
+
