@@ -10,8 +10,8 @@ import re
 #set up argpase
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Remove PCR duplicates from a SAM file of interest")
-    parser.add_argument("-f", "--file", help="Designates file path to sorted input sam file", type=str, required=True)
-    parser.add_argument("-o", "--outfile", help="designates file path to output the deduplicated sam file", type=str, required = True)
+    parser.add_argument("-f", "--file", help="Designates absolute file path to sorted input sam file", type=str, required=True)
+    parser.add_argument("-o", "--outfile", help="designates absolute file path to output the deduplicated sam file", type=str, required = True)
     parser.add_argument("-u", "--umi", help="designates file path containing the list of UMIs", type=str, default='STL96.txt')
     return parser.parse_args()
 
@@ -50,17 +50,25 @@ def calc_pos(cigar: str, pos: int, strand: str) -> int:
     clipping, deletions, and skipped regions for the minus strand to calculate the 5' start positions'''
 
     #initalialize dictionary to store all cigar letter values, key = letter, value = sum of numbers associated with letter
-    cigar_dict = {'S_left': 0, 'M': 0, 'D': 0, 'I': 0, 'N': 0, 'S': 0}
+    cigar_dict = {'S_left': 0, 'M': 0, 'D': 0, 'I': 0, 'N': 0, 'S': 0, 'H': 0, 'P':0}
     first_entry = True  #hold the value of if its on the first part of the cigar strand
     
     #create a list of tuples with each cigar letter and number pair
     for num, letter in re.findall(r'(\d+)([A-Za-z])?', cigar):
-        if letter == 'S' and first_entry: #check if its the leftside S which will appear first
+        
+        #check if its the leftside S which will appear first
+        if letter == 'S' and first_entry:
             cigar_dict['S_left'] = int(num) #add S left value to dictionary
             first_entry = False #permanantly make first entry false after first pass
-        else:
+        
+        #case for all other CIGAR string letters
+        elif letter in cigar_dict:
             cigar_dict[letter] += int(num) #add to sum of that letter entry
             first_entry = False #permanantly make first entry false after first pass
+        
+        #else in case a different or weird character is encountered
+        else:
+            print("Invalid CIGAR string character encountered")
 
     #calculate adjusted position for plus strand: pos - S_left
     if strand == "plus":

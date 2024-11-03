@@ -32,3 +32,5 @@ Number of alignments kept: 8
 Number of duplicates removed: 8
 Number of unknown umis discarded: 2
 ```
+
+```test.sam``` is an additional test .sam file that was provided.

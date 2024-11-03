@@ -5,7 +5,15 @@ Jules Hays
 
 Python version: 3.12
 
-Environments used: package (package version x.x)
+Packages used: samtools 1.20
+
+File directory:
+* ```unit_tests/``` -> input and output unit test encompassing all scenarios
+* Hays_deduper.py -> deduplicating script
+* STL96.txt -> list of known UMIs
+* lab_notebook.md -> notebook for this assignment
+* part1_pseudocode.md -> my intial psuedocode approach for tackling this problem
+* run_dedup.sh -> sbatch file to sort input sam file and run ```Hays_deduper.py```
 
 ---
 
@@ -313,6 +321,8 @@ It successfully ran and the output file is called ```dedup_out.sam```
 
 Here are all the bash commands I used to obtain / where I found that information:
 ```
+$ srun -A bgmp -p bgmp -N 1 -c 1 -t 1:00:00 --pty bash
+
 # Header lines
 $ cat dedup_out.sam | grep "^@" | wc -l
 65
@@ -327,50 +337,51 @@ Number of unknown umis discarded: 0
 Number of duplicates removed: 4467362
 
 # Number of reads per chromosome
-$ cat dedup_out.sam | grep -v "^@" | cut -f 3 | uniq -c
- 697508 1
- 564903 10
-1220389 11
- 359951 12
- 467659 13
- 387239 14
- 437465 15
- 360923 16
- 517566 17
- 290506 18
- 571665 19
-2787018 2
- 547615 3
- 589839 4
- 562160 5
- 510818 6
-1113183 7
- 576463 8
- 627488 9
- 202002 MT
- 317853 X
-   2247 Y
-      3 JH584299.1
-    656 GL456233.2
-      6 GL456211.1
-      4 GL456221.1
-      1 GL456354.1
-      5 GL456210.1
-      4 GL456212.1
-    294 JH584304.1
-      2 GL456379.1
-      3 GL456367.1
-      1 GL456239.1
-      1 GL456383.1
-   5450 MU069435.1
-      1 GL456389.1
-     21 GL456370.1
-      1 GL456390.1
-      1 GL456382.1
-     17 GL456396.1
-      3 GL456368.1
-      3 MU069434.1
-    111 JH584295.1
+$ cat dedup_out.sam | grep -v "^@" | cut -f 3 | uniq -c | awk -v OFS='\t' '{print $2, $1}' | sort -n
+
+GL456210.1      5
+GL456211.1      6
+GL456212.1      4
+GL456221.1      4
+GL456233.2      656
+GL456239.1      1
+GL456354.1      1
+GL456367.1      3
+GL456368.1      3
+GL456370.1      21
+GL456379.1      2
+GL456382.1      1
+GL456383.1      1
+GL456389.1      1
+GL456390.1      1
+GL456396.1      17
+JH584295.1      111
+JH584299.1      3
+JH584304.1      294
+MT      202002
+MU069434.1      3
+MU069435.1      5450
+X       317853
+Y       2247
+1       697508
+2       2787018
+3       547615
+4       589839
+5       562160
+6       510818
+7       1113183
+8       576463
+9       627488
+10      564903
+11      1220389
+12      359951
+13      467659
+14      387239
+15      437465
+16      360923
+17      517566
+18      290506
+19      571665
 
 #Memory (in GB) - /usr/bin/time info
 Maximum resident set size (kbytes): 557364
@@ -388,29 +399,60 @@ Wrong UMIs: 0
 Duplicates removed: 4467362
 Number of reads per chromosome:
 
- 697508 1
- 564903 10
-1220389 11
- 359951 12
- 467659 13
- 387239 14
- 437465 15
- 360923 16
- 517566 17
- 290506 18
- 571665 19
-2787018 2
- 547615 3
- 589839 4
- 562160 5
- 510818 6
-1113183 7
- 576463 8
- 627488 9
- 202002 MT
- 317853 X
-   2247 Y
+GL456210.1      5
+GL456211.1      6
+GL456212.1      4
+GL456221.1      4
+GL456233.2      656
+GL456239.1      1
+GL456354.1      1
+GL456367.1      3
+GL456368.1      3
+GL456370.1      21
+GL456379.1      2
+GL456382.1      1
+GL456383.1      1
+GL456389.1      1
+GL456390.1      1
+GL456396.1      17
+JH584295.1      111
+JH584299.1      3
+JH584304.1      294
+MT      202002
+MU069434.1      3
+MU069435.1      5450
+X       317853
+Y       2247
+1       697508
+2       2787018
+3       547615
+4       589839
+5       562160
+6       510818
+7       1113183
+8       576463
+9       627488
+10      564903
+11      1220389
+12      359951
+13      467659
+14      387239
+15      437465
+16      360923
+17      517566
+18      290506
+19      571665
 
-Memory (in GB): 0.56 GB
+Memory (in GB): 0.56
 Run time (H:mm:ss): 0:01:03
 ```
+
+---
+### 11/3/24
+### Submitting
+
+I submitted the Qualatrics form on the canvas assignment.
+
+I made a little modification to my code that allows for any CIGAR strand to be inputted (including P and H) even though we don't do anything with those characters at least it won't error out. I also added a line that catches any additional characters that aren't valid in a CIGAR string or that I didn't account for and prints a helpful message to let the user know.
+
+I will make sure everything is pushed to GitHub for the base assignment.
