@@ -34,3 +34,42 @@ Number of unknown umis discarded: 2
 ```
 
 ```test.sam``` is an additional test .sam file that was provided.
+
+
+# Challenge information
+
+## UMI error correction
+
+```input_umi_correct.sam``` contains 1 additional line compared to the original ```input.sam``` to test the ```Hays_deduper_umicorrect.py``` script. Here's what's different.
+
+| Alignment Number | Duplicate? | Keep or Toss | Reason |
+|---|---|---|---|
+| 11 | No | Toss | invalid UMI, can't be corrrected |
+| 18 | No | Toss | invalid UMI that is corrected and now its a duplicate |
+| 19 | No | Keep | invalid UMI that is corrected and not a duplicate |
+
+When run through ```Hays_deduper_umicorrect.py``` with the -e flag is set to True (UMI correction), you should expect the file output to look like ```output_umi_correct.sam``` and get the resulting text output:
+```
+Number of alignments kept: 9
+Number of duplicates removed: 9
+Number of unknown umis discarded: 1
+Number of unknown umis corrected: 2
+```
+
+
+## Choice of duplicate written out
+
+```input_choice.sam``` contains a couple lines to test the ```Hays_deduper_choice.py``` script.
+
+| Alignment Number | Duplicate? | Keep or Toss | Reason |
+|---|---|---|---|
+| 1 | Yes | Toss | same as 3 but lower average quality |
+| 2 | Yes | Toss | same as 3 but shorter length |
+| 3 | No | Keep | highest quality and longest length |
+
+When run though ```Hays_deduper_choice.py``` it I should get ```output_choice.sam``` as the resulting file and the following text output:
+```
+Number of alignments kept: 1
+Number of duplicates removed: 2
+Number of unknown umis discarded: 0
+```

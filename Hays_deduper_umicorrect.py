@@ -13,6 +13,7 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("-f", "--file", help="Designates absolute file path to sorted input sam file", type=str, required=True)
     parser.add_argument("-o", "--outfile", help="designates absolute file path to output the deduplicated sam file", type=str, required = True)
     parser.add_argument("-u", "--umi", help="designates file path containing the list of UMIs", type=str, default='STL96.txt')
+    parser.add_argument("-e", "--error_correct_umi", help="designates if incorrect UMIs should be error corrected rather than thrown out", type=bool, default= False)
     return parser.parse_args()
 
 #call get_args to create args object
@@ -22,6 +23,7 @@ args = get_args()
 sam_file: str = args.file
 output: str = args.outfile
 umi_file_path: str = args.umi
+umi_correct: bool = args.error_correct_umi
 
 
 #hard coded variables for testing
@@ -43,15 +45,48 @@ def make_umi_set(umi_file: str) -> set:
             umi_set.add(line)
     return umi_set
 
-#correct error umis
-def correct_umi(wrong_umi: str) -> str:
-    '''Inputs UMI that doesn't match UMIs in the UMI set. Calculates the hamming
-    distance between each known UMI and the errored UMi returns the UMI with the 
-    smallest hamming distance'''
-    
 
+#correct error umis
+def correct_umi(wrong_umi: str, umi_set: set) -> str or -1:
+    '''Inputs UMI that doesn't match UMIs in the UMI set. Calculates the hamming distance 
+    between each known UMI and the errored UMi returns the UMI with the smallest hamming 
+    distance. If the smallest hamming distance is for more than 1 UMI, then the corrected 
+    UMI cannot be determined and the function will return -1'''
+
+    #set a variables to store information about the lowest hamming distance as you loop through
+    lowest_distance = len(wrong_umi) + 1  #set something higher than the highest ppossible hamming distance
+    corrected_umi = ""   #stores the lowest hamming distance UMI so far
+    duplicate_low_distance = False  #keeps track of if more than 1 UMI had the lowest difference
+
+    #loop through the umi set
+    for known_umi in umi_set:
+
+        #calculate the hamming distance between the UMI and the known UMI
+        distance = sum(u1 != u2 for u1, u2 in zip(wrong_umi, known_umi))
+
+        #checks if distance is lower than current lowest distance
+        if distance < lowest_distance:
+
+            #sets the variables to contain info about the new closest UMI
+            lowest_distance = distance
+            corrected_umi = known_umi
+            duplicate_low_distance = False  #resets this flag when you find a new lowest distance
+
+        #checks if distance is the same as the current distance, because then you wouldn't be able to tell which UMI is right
+        elif distance == lowest_distance:
+            duplicate_low_distance = True
+
+        #move onto next UMI in the set if the distance isn't <= current lowest distance
+        else:
+            continue
     
-    return corrected_umi
+    #if the UMI had multiple matches, return a -1 so my main code known to discard it
+    if duplicate_low_distance:
+        return -1
+    #returns the UMI with the lowest hamming distance
+    else:
+        return corrected_umi
+
 
 #calculates the 5' start position
 def calc_pos(cigar: str, pos: int, strand: str) -> int:
@@ -92,9 +127,7 @@ def calc_pos(cigar: str, pos: int, strand: str) -> int:
     else:
         print("not a valid strand")
 
-    
     return position
-
 
 
 #START CODE BODY
@@ -106,6 +139,7 @@ umi_set = make_umi_set(umi_file_path)
 unknown_umi_count = 0
 outputted_line_count = 0
 removed_dup_count = 0
+corrected_umis = 0
 
 #initialize sets to store outputted SAM line info
 plus_info = set() #info will be stored in a tuple of (UMI, posiion) for each entry
@@ -152,10 +186,23 @@ with open(sam_file, "rt") as fh:
 
                 #check if UMI in list of known UMIs, if its not discard
                 if umi not in umi_set:
-                    umi = correct_umi(umi)
-                    unknown_umi_count += 1
+                    #check if error correct UMI option is on
+                    if umi_correct:
+                        #calculate correct UMI
+                        new_umi = correct_umi(umi, umi_set)
 
-                    continue
+                        #check if a valid umi was found
+                        if new_umi == -1:
+                            unknown_umi_count += 1
+                            continue
+                        else:
+                            umi = new_umi
+                            corrected_umis += 1
+
+                    #if UMI correct option not on, just discard the UMI if not in set
+                    else:
+                        unknown_umi_count += 1
+                        continue
 
                 #determine what strand the query is on
                 if ((FLAG & 16) == 16):  #minus strand
@@ -198,3 +245,6 @@ with open(sam_file, "rt") as fh:
 print(f'Number of alignments kept: {outputted_line_count}')
 print(f'Number of duplicates removed: {removed_dup_count}')
 print(f'Number of unknown umis discarded: {unknown_umi_count}')
+
+if umi_correct:
+    print(f'Number of unknown umis corrected: {corrected_umis}')
