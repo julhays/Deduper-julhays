@@ -9,12 +9,16 @@ Packages used: samtools 1.20
 
 File directory:
 * ```unit_tests/``` -> input and output unit test encompassing all scenarios
-* Hays_deduper.py -> deduplicating script
-* STL96.txt -> list of known UMIs
-* lab_notebook.md -> notebook for this assignment
-* part1_pseudocode.md -> my intial psuedocode approach for tackling this problem
-* run_dedup.sh -> sbatch file to sort input sam file and run ```Hays_deduper.py```
+* ```Hays_deduper.py``` -> deduplicating script
+* ```STL96.txt``` -> list of known UMIs
+* ```lab_notebook.md``` -> notebook for this assignment
+* ```part1_pseudocode.md``` -> my intial psuedocode approach for tackling this problem
+* ```run_dedup.sh``` -> sbatch file to sort input sam file and run ```Hays_deduper.py```
 
+This challenge branch also includes:
+* ```Hays_deduper_umicorrect.py``` -> a new script that incorperates an option for UMI error correction of known UMIs
+* ```Hays_deduper_choice.py``` -> a new script version that chooses which duplicate to write out based on what alignment has the highest quality and if the quality is same then the longest length
+*```Hays_deduper_randomers.py``` -> a new script that incorperates an option to use 8 nt randomers instead of known UMIs
 ---
 
 ### 10/12/24
@@ -456,3 +460,101 @@ I submitted the Qualatrics form on the canvas assignment.
 I made a little modification to my code that allows for any CIGAR strand to be inputted (including P and H) even though we don't do anything with those characters at least it won't error out. I also added a line that catches any additional characters that aren't valid in a CIGAR string or that I didn't account for and prints a helpful message to let the user know.
 
 I will make sure everything is pushed to GitHub for the base assignment.
+
+I might try to tackle some of the bonuses.
+
+---
+### 11/12/24
+### Challenge problems - UMI error correction
+
+I made a new branch on my GitHub called bonus. I am going to make a copies of my script to tackle the bonus problems. 
+
+I will start with error correction of UMIs, with a script called ```Hays_deduper_umicorrect.py```.. My strategy is to include a function that if an UMI is not in the list, there is a function that calculates the UMI in the list with the closest hamming distance to the UMI with errors, and replaced the error UMI with that one for the duplicate analysis. If there are more than 1 UMIs that have the closest hamming distance then the UMI will be considered unknown still.
+
+Ok, I got the function done and made a new unit test called ```input_umi_correct.sam``` and ```output_umi_correct.sam```to test that it works. I included a flag in my argpasrse that takes a boolean to determine if that option will be incorperated or not. I will run it on the actual file with the following command:
+```
+/usr/bin/time -v ./Hays_deduper_umicorrect.py -u STL96.txt -f <input_file> -o dedup_out.sam -e True
+```
+
+I got the expected output for my unit test, which is:
+```
+Number of alignments kept: 9
+Number of duplicates removed: 9
+Number of unknown umis discarded: 1
+Number of unknown umis corrected: 2
+```
+
+Time to run the given test file. I would expect the numbers to be the same as the old script because there were no discarded UMIs in that file. So I should still expect to see 0 discarded lines and 0 corrected UMIs. Here are the results:
+
+```
+sbatch run_dedup.sh 
+Submitted batch job 23252206
+
+Number of alignments kept: 13719048
+Number of duplicates removed: 4467362
+Number of unknown umis discarded: 0
+Number of unknown umis corrected: 0
+```
+This is what I expected to see, so I believe my addition to my script works!
+
+
+### Challenge problems - Choice of duplicate written out
+
+Next, I want to try to implement the choice of duplicate written to the file in a script called ```Hays_deduper_choice.py```. My strategy for this is to output the alignment that has a higher quality, and if the quality is the same I will break the tie with the alignment that is a longer length. If there is still a tie at that point I will arbitrarily pick one. To implement that, I think I need to change my sets to dictionaries where the key is the same as the set, and the value is a list of the quality, length, and sam file line of the alignment. This will be too hard to implement as an option with an argparse so the script is just gonna treat this as default behavior.
+
+Ok, I got the script done and made a new unit test called ```input_choice.sam``` and ```output_choice.sam```to test that it works. I will run it on the actual file with the following command:
+```
+/usr/bin/time -v ./Hays_deduper_choice.py -u STL96.txt -f <input_file> -o dedup_out.sam
+```
+
+I got the expected output for my unit test, which is:
+```
+Number of alignments kept: 8
+Number of duplicates removed: 8
+Number of unknown umis discarded: 3
+```
+And the output file matches.
+
+Time to run the given test file. I would expect the numbers to be the same as the old script because this should not change the number of alignments that are removed. So I should still expect to see 0 discarded lines and 0 corrected UMIs. Here are the results:
+
+```
+sbatch run_dedup.sh 
+Submitted batch job 23252344
+
+Number of alignments kept: 13719048
+Number of duplicates removed: 4467362
+Number of unknown umis discarded: 0
+```
+This is what I expected to see. Additionally, I ran a diff command on the original output vs my new output to see if any lines were changed and there were many lines that were different which tells me a different duplicate is being kept. So I believe my addition to my script works!
+
+
+
+### Challenge problems - Option for randomers vs known UMIs
+
+Next, I will tackle randomers vs known UMIs. I am going to make another script called ```Hays_deduper_randomers.py``` that has an option to use 8 nt randomers if a list of known UMIs isn't given. My strategy is to have a check that the UMI is the right length (8 nt) and only has A, G, T, C to be considered a valid UMI if a list of known UMIs is not provided.
+
+Ok, I got the script done and tested it on my ```input_umi_correct.sam```, which should produce the same output as  ```output_umi_correct.sam```to test that it works. I will run it on the actual file with the following command:
+```
+/usr/bin/time -v ./Hays_deduper_randomers.py -f <input_file> -o dedup_out.sam
+```
+
+I got the expected output for my unit test, which is:
+```
+Number of alignments kept: 9
+Number of duplicates removed: 8
+Number of unknown umis discarded: 2
+```
+Time to run the given test file. I would expect the numbers to be the same as the old script because there were no discarded UMIs in that file. So I should still expect to see 0 discarded lines and 0 corrected UMIs. Here are the results:
+
+```
+sbatch run_dedup.sh 
+Submitted batch job 23252400
+
+Number of alignments kept: 13719048
+Number of duplicates removed: 4467362
+Number of unknown umis discarded: 0
+```
+This is what I expected to see, so I believe my addition to my script works!
+
+
+Should I tackle paired end next???????
