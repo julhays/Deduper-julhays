@@ -508,9 +508,9 @@ Ok, I got the script done and made a new unit test called ```input_choice.sam```
 
 I got the expected output for my unit test, which is:
 ```
-Number of alignments kept: 1
-Number of duplicates removed: 2
-Number of unknown umis discarded: 0
+Number of alignments kept: 8
+Number of duplicates removed: 8
+Number of unknown umis discarded: 3
 ```
 And the output file matches.
 
@@ -527,5 +527,33 @@ Number of unknown umis discarded: 0
 This is what I expected to see. Additionally, I ran a diff command on the original output vs my new output to see if any lines were changed and there were many lines that were different which tells me a different duplicate is being kept. So I believe my addition to my script works!
 
 
-Should I tackle paired end next???????
 
+### Challenge problems - Option for randomers vs known UMIs
+
+Next, I will tackle randomers vs known UMIs. I am going to make another script called ```Hays_deduper_randomers.py``` that has an option to use 8 nt randomers if a list of known UMIs isn't given. My strategy is to have a check that the UMI is the right length (8 nt) and only has A, G, T, C to be considered a valid UMI if a list of known UMIs is not provided.
+
+Ok, I got the script done and tested it on my ```input_umi_correct.sam```, which should produce the same output as  ```output_umi_correct.sam```to test that it works. I will run it on the actual file with the following command:
+```
+/usr/bin/time -v ./Hays_deduper_randomers.py -f <input_file> -o dedup_out.sam
+```
+
+I got the expected output for my unit test, which is:
+```
+Number of alignments kept: 9
+Number of duplicates removed: 8
+Number of unknown umis discarded: 2
+```
+Time to run the given test file. I would expect the numbers to be the same as the old script because there were no discarded UMIs in that file. So I should still expect to see 0 discarded lines and 0 corrected UMIs. Here are the results:
+
+```
+sbatch run_dedup.sh 
+Submitted batch job 23252400
+
+Number of alignments kept: 13719048
+Number of duplicates removed: 4467362
+Number of unknown umis discarded: 0
+```
+This is what I expected to see, so I believe my addition to my script works!
+
+
+Should I tackle paired end next???????
